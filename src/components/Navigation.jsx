@@ -1,41 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
-import {
-  pageGraph,
-  pagePaths,
-  getConnectedPages,
-} from "../utils/Graph";
 
-const pageLabels = {
-  Home: "ค้นหาเมนู",
-  IngredientFinder: "ค้นหาจากวัตถุดิบ",
-  MealDetail: "รายละเอียดเมนู",
-  Queue: "คิวเมนู",
-  SavedRecipes: "เมนูที่บันทึก",
-};
-
-function getCurrentPage(pathname) {
-  if (pathname.startsWith("/meal/")) {
-    return "MealDetail";
-  }
-
-  return (
-    Object.keys(pagePaths).find(
-      (page) => pagePaths[page] === pathname
-    ) || "Home"
-  );
-}
+const navigationPages = [
+  { name: "Home", label: "ค้นหาเมนู", path: "/" },
+  { name: "IngredientFinder", label: "ค้นหาจากวัตถุดิบ", path: "/ingredients" },
+  { name: "Queue", label: "คิวเมนู", path: "/queue" },
+  { name: "SavedRecipes", label: "เมนูที่บันทึก", path: "/saved" },
+];
 
 function Navigation() {
   const location = useLocation();
-  const currentPage = getCurrentPage(location.pathname);
-
-  // อ่านหน้าที่เชื่อมต่อจาก Graph
-const navigationPages = Object.keys(pagePaths).filter(
-  (page) =>
-    pageGraph[page] &&
-    pagePaths[page] &&
-    !pagePaths[page].includes(":")
-);
 
   return (
     <nav className="main-navigation">
@@ -44,17 +17,22 @@ const navigationPages = Object.keys(pagePaths).filter(
       </Link>
 
       <div className="nav-links">
-        {navigationPages.map((page) => (
-          <Link
-            key={page}
-            to={pagePaths[page]}
-            className={
-              currentPage === page ? "nav-link active" : "nav-link"
-            }
-          >
-            {pageLabels[page]}
-          </Link>
-        ))}
+        {navigationPages.map((page) => {
+          const isActive =
+            page.path === "/"
+              ? location.pathname === "/"
+              : location.pathname.startsWith(page.path);
+
+          return (
+            <Link
+              key={page.name}
+              to={page.path}
+              className={isActive ? "nav-link active" : "nav-link"}
+            >
+              {page.label}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );
