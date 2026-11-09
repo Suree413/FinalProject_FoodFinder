@@ -1,28 +1,26 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import MealCard from "../components/MealCard";
+import { createMealHashTable, getMealId, readStoredMeals, SAVED_STORAGE_KEY, writeStoredMeals } from "../utils/mealStorage";
 
 function SavedRecipes() {
-  const [saved, setSaved] = useState([]);
-
-  useEffect(() => {
-    const recipes = JSON.parse(
-      localStorage.getItem("foodfinder_saved") || "[]"
-    );
-
-    setSaved(recipes);
-  }, []);
+  const [saved, setSaved] = useState(() => readStoredMeals(SAVED_STORAGE_KEY));
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const removeRecipe = (id) => {
-    const updated = saved.filter(
-      (meal) => meal.idMeal !== id
-    );
+    const recipesById = createMealHashTable(saved);
+    if (!recipesById.remove(id)) return;
 
-    setSaved(updated);
+    const updated = saved.filter((meal) => getMealId(meal) !== String(id));
 
-    localStorage.setItem(
-      "foodfinder_saved",
-      JSON.stringify(updated)
-    );
+    try {
+      writeStoredMeals(SAVED_STORAGE_KEY, updated);
+      setSaved(updated);
+      setMessage("นำเมนูออกจากรายการโปรดแล้ว");
+      setError("");
+    } catch (storageError) {
+      setError(storageError.message || "อัปเดตรายการโปรดไม่สำเร็จ");
+    }
   };
 
   return (
@@ -30,30 +28,22 @@ function SavedRecipes() {
       <h1>❤️ Saved Recipes</h1>
       <p>เมนูอาหารที่คุณบันทึกไว้</p>
 
+      {error && <p className="status-message error-message">{error}</p>}
+      {message && !error && (
+        <p className="status-message" role="status">{message}</p>
+      )}
+
       {saved.length === 0 ? (
         <p>ยังไม่มีเมนูที่บันทึกไว้</p>
       ) : (
         <div className="meal-grid">
           {saved.map((meal) => (
-            <div className="meal-card" key={meal.idMeal}>
-              <img
-                src={meal.strMealThumb}
-                alt={meal.strMeal}
-                width="200"
-              />
-
-              <h3>{meal.strMeal}</h3>
-
-              <Link to={`/meal/${meal.idMeal}`}>
-                ดูรายละเอียด
-              </Link>
-
-              <button
-                onClick={() => removeRecipe(meal.idMeal)}
-              >
-                นำออกจากรายการโปรด
-              </button>
-            </div>
+            <MealCard
+              key={meal.idMeal}
+              meal={meal}
+              actionLabel="นำออกจากรายการโปรด"
+              onAction={(item) => removeRecipe(item.idMeal)}
+            />
           ))}
         </div>
       )}

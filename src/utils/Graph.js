@@ -2,11 +2,11 @@
 // Graph: เก็บความสัมพันธ์ระหว่างหน้าเว็บด้วย Adjacency List
 
 export const pageGraph = {
-  Home: ["IngredientFinder", "SavedRecipes"],
-  IngredientFinder: ["Home", "MealDetail"],
-  MealDetail: ["Home", "Queue", "SavedRecipes"],
-  Queue: ["Home", "MealDetail"],
-  SavedRecipes: ["Home", "MealDetail"],
+  Home: ["IngredientFinder", "MealDetail", "Queue", "SavedRecipes"],
+  IngredientFinder: ["Home", "MealDetail", "Queue", "SavedRecipes"],
+  MealDetail: ["Home", "IngredientFinder", "Queue", "SavedRecipes"],
+  Queue: ["Home", "IngredientFinder", "MealDetail", "SavedRecipes"],
+  SavedRecipes: ["Home", "IngredientFinder", "MealDetail", "Queue"],
 };
 
 // แปลงชื่อหน้าเป็น URL

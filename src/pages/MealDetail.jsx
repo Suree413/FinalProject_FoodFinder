@@ -1,43 +1,48 @@
 
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import Loading from "../components/Loading";
+import { getMealDetailsById } from "../services/mealApi";
+import { useNavigationHistory } from "../context/navigationHistoryContext";
+import {
+  addMealToQueue,
+  saveRecipe as saveRecipeToStorage,
+} from "../utils/MealQueue";
 
 function MealDetail() {
   const { id } = useParams();
+  const goBack = useNavigationHistory();
 
   const [meal, setMeal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [storageMessage, setStorageMessage] = useState("");
+  const [storageError, setStorageError] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchMeal = async () => {
       setLoading(true);
       setError("");
+      setMeal(null);
 
       try {
-        const response = await fetch(
-          `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`
-        );
-
-        if (!response.ok) {
-          throw new Error("ไม่สามารถเชื่อมต่อ API ได้");
+        const result = await getMealDetailsById(id, controller.signal);
+        setMeal(result);
+      } catch (requestError) {
+        if (requestError.name !== "AbortError") {
+          setError(requestError.message || "เกิดข้อผิดพลาด");
         }
-
-        const data = await response.json();
-
-        if (data.meals && data.meals.length > 0) {
-          setMeal(data.meals[0]);
-        } else {
-          setError("ไม่พบข้อมูลเมนูอาหาร");
-        }
-      } catch (err) {
-        setError(err.message || "เกิดข้อผิดพลาด");
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchMeal();
+
+    return () => controller.abort();
   }, [id]);
 
   // ดึงรายการวัตถุดิบและปริมาณ
@@ -61,65 +66,52 @@ function MealDetail() {
     return ingredients;
   };
 
-  // เพิ่มเมนูเข้า Queue
   const addToQueue = () => {
-    const queue = JSON.parse(
-      localStorage.getItem("foodfinder_queue") || "[]"
-    );
+    try {
+      if (!addMealToQueue(meal)) {
+        setStorageError(true);
+        setStorageMessage("เมนูนี้อยู่ใน Queue แล้ว");
+        return;
+      }
 
-    const exists = queue.some(
-      (item) => item.idMeal === meal.idMeal
-    );
-
-    if (exists) {
-      alert("เมนูนี้อยู่ใน Queue แล้ว");
-      return;
+      setStorageError(false);
+      setStorageMessage("เพิ่มเมนูเข้า Queue แล้ว");
+    } catch (storageException) {
+      setStorageError(true);
+      setStorageMessage(storageException.message || "เพิ่มเมนูเข้า Queue ไม่สำเร็จ");
     }
-
-    queue.push(meal);
-
-    localStorage.setItem(
-      "foodfinder_queue",
-      JSON.stringify(queue)
-    );
-
-    alert("เพิ่มเมนูเข้า Queue แล้ว!");
   };
 
-  // บันทึกเมนูโปรด
   const saveRecipe = () => {
-    const saved = JSON.parse(
-      localStorage.getItem("foodfinder_saved") || "[]"
-    );
+    try {
+      if (!saveRecipeToStorage(meal)) {
+        setStorageError(true);
+        setStorageMessage("เมนูนี้ถูกบันทึกไว้แล้ว");
+        return;
+      }
 
-    const exists = saved.some(
-      (item) => item.idMeal === meal.idMeal
-    );
-
-    if (exists) {
-      alert("เมนูนี้ถูกบันทึกไว้แล้ว");
-      return;
+      setStorageError(false);
+      setStorageMessage("บันทึกเมนูโปรดเรียบร้อย");
+    } catch (storageException) {
+      setStorageError(true);
+      setStorageMessage(storageException.message || "บันทึกเมนูโปรดไม่สำเร็จ");
     }
-
-    saved.push(meal);
-
-    localStorage.setItem(
-      "foodfinder_saved",
-      JSON.stringify(saved)
-    );
-
-    alert("บันทึกเมนูโปรดเรียบร้อย!");
   };
 
   if (loading) {
-    return <h2>กำลังโหลดรายละเอียดอาหาร...</h2>;
+    return (
+      <div className="meal-detail">
+        <button className="back-button" onClick={goBack}>← ย้อนกลับ</button>
+        <Loading message="กำลังโหลดรายละเอียดอาหาร..." />
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div>
+      <div className="meal-detail">
+        <button className="back-button" onClick={goBack}>← ย้อนกลับ</button>
         <h2>{error}</h2>
-        <Link to="/">กลับหน้าหลัก</Link>
       </div>
     );
   }
@@ -128,7 +120,7 @@ function MealDetail() {
 
   return (
     <div className="meal-detail">
-      <Link to="/">← กลับหน้าหลัก</Link>
+      <button className="back-button" onClick={goBack}>← ย้อนกลับ</button>
 
       <h1>{meal.strMeal}</h1>
 
@@ -155,6 +147,14 @@ function MealDetail() {
           ❤️ บันทึกเมนูโปรด
         </button>
       </div>
+      {storageMessage && (
+        <p
+          className={`status-message${storageError ? " error-message" : ""}`}
+          role={storageError ? "alert" : "status"}
+        >
+          {storageMessage}
+        </p>
+      )}
 
       <h2>🥕 Ingredients</h2>
 

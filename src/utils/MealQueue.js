@@ -1,48 +1,107 @@
+import { HashTable } from "./HashTable";
+import {
+  getMealId,
+  QUEUE_STORAGE_KEY,
+  readStoredMeals,
+  SAVED_STORAGE_KEY,
+  writeStoredMeals,
+} from "./mealStorage";
+
 export class MealQueue {
-  constructor() {
-    // ดึงข้อมูลคิวเดิมจาก Local Storage ถ้ามี
-    const savedQueue = localStorage.getItem('mealQueue');
-    this.items = savedQueue ? JSON.parse(savedQueue) : [];
+  constructor(meals = []) {
+    this.items = [];
+    this.head = 0;
+    this.length = 0;
+    this.mealIds = new HashTable();
+
+    for (const meal of meals) {
+      this.enqueue(meal);
+    }
   }
 
-  // เพิ่มเมนูเข้าคิว (Enqueue)
   enqueue(meal) {
+    const id = getMealId(meal);
+    if (id === null || this.mealIds.has(id)) return false;
+
     this.items.push(meal);
-    this.saveToStorage();
+    this.mealIds.set(id, true);
+    this.length += 1;
+    return true;
   }
 
-  // เอาเมนูออกจากคิวหน้าสุด (Dequeue)
   dequeue() {
-    if (this.isEmpty()) return null;
-    const item = this.items.shift();
-    this.saveToStorage();
-    return item;
+    const meal = this.peek();
+    if (meal === null) return null;
+
+    this.head += 1;
+    this.length -= 1;
+    this.mealIds.remove(getMealId(meal));
+
+    if (this.head > 32 && this.head * 2 >= this.items.length) {
+      this.items = this.items.slice(this.head);
+      this.head = 0;
+    }
+
+    return meal;
+  }
+
+  peek() {
+    return this.items[this.head] ?? null;
+  }
+
+  has(id) {
+    return this.mealIds.has(id);
+  }
+
+  remove(id) {
+    const normalizedId = String(id);
+    if (!this.mealIds.has(normalizedId)) return false;
+
+    const index = this.items.findIndex(
+      (meal, itemIndex) =>
+        itemIndex >= this.head && getMealId(meal) === normalizedId,
+    );
+    if (index < 0) return false;
+
+    this.items.splice(index, 1);
+    this.mealIds.remove(normalizedId);
+    this.length -= 1;
+    return true;
   }
 
   getQueue() {
-    return this.items;
+    return this.items.slice(this.head);
   }
 
   isEmpty() {
-    return this.items.length === 0;
-  }
-
-  saveToStorage() {
-    localStorage.setItem('mealQueue', JSON.stringify(this.items));
+    return this.length === 0;
   }
 }
 
-// ฟังก์ชันช่วยจัดการ Saved Recipes (เมนูโปรด) ใน Local Storage
 export const getSavedRecipes = () => {
-  const saved = localStorage.getItem('savedRecipes');
-  return saved ? JSON.parse(saved) : [];
+  return readStoredMeals(SAVED_STORAGE_KEY);
+};
+
+export const addMealToQueue = (meal) => {
+  const queue = new MealQueue(readStoredMeals(QUEUE_STORAGE_KEY));
+  if (!queue.enqueue(meal)) return false;
+
+  writeStoredMeals(QUEUE_STORAGE_KEY, queue.getQueue());
+  return true;
 };
 
 export const saveRecipe = (meal) => {
   const recipes = getSavedRecipes();
-  const exists = recipes.some((item) => item.id === meal.id);
-  if (!exists) {
-    recipes.push(meal);
-    localStorage.setItem('savedRecipes', JSON.stringify(recipes));
+  const table = new HashTable();
+  for (const recipe of recipes) {
+    const id = getMealId(recipe);
+    if (id !== null) table.set(id, recipe);
   }
+
+  const id = getMealId(meal);
+  if (id === null || table.has(id)) return false;
+
+  table.set(id, meal);
+  writeStoredMeals(SAVED_STORAGE_KEY, [...recipes, meal]);
+  return true;
 };

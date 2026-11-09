@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // =====================================================================
 // 801201 Week 8
 // Sort (W5) + Queue (W6) + Stack (W8)
@@ -11,15 +12,22 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+=======
+import express from 'express';
+>>>>>>> 41434fc (แก้ไขการเชื่อมหน้า)
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
+const THEMEALDB_BASE = 'https://www.themealdb.com/api/json/v1/1';
+const CACHE_TTL_MS = 5 * 60 * 1000;
+const cache = new Map();
 
 // =====================================================================
 // MIDDLEWARE
 // =====================================================================
 
 app.use(express.json());
+<<<<<<< HEAD
 app.use(cors());
 
 // หน้าเว็บอยู่ใน public
@@ -108,6 +116,8 @@ async function loadMeals() {
     meals = [];
   }
 }
+=======
+>>>>>>> 41434fc (แก้ไขการเชื่อมหน้า)
 
 // =====================================================================
 // SORT
@@ -179,14 +189,30 @@ function bubbleSort(arr) {
 function normalizeMeal(meal) {
   return {
     id: Number(meal.idMeal),
-    name: meal.strMeal,
+    idMeal: meal.idMeal,
+    name: meal.strMeal || '',
+    strMeal: meal.strMeal || '',
     category: meal.strCategory || '',
+    strCategory: meal.strCategory || '',
     area: meal.strArea || '',
-    instructions: meal.strInstructions || '',
-    image: meal.strMealThumb || ''
+    strArea: meal.strArea || '',
+    image: meal.strMealThumb || '',
+    strMealThumb: meal.strMealThumb || '',
+    ...Object.fromEntries(
+      Array.from({ length: 20 }, (_, index) => {
+        const number = index + 1;
+        return [
+          [`strIngredient${number}`, meal[`strIngredient${number}`] || ''],
+          [`strMeasure${number}`, meal[`strMeasure${number}`] || ''],
+        ];
+      }).flat(),
+    ),
+    strInstructions: meal.strInstructions || '',
+    strYoutube: meal.strYoutube || '',
   };
 }
 
+<<<<<<< HEAD
 // =====================================================================
 // API /meals
 // =====================================================================
@@ -454,6 +480,272 @@ app.get('/watchlist', (req, res) => {
     size: watchlist.size(),
     next: watchlist.peek() || null
   });
+=======
+async function fetchMealDB(path, params = {}) {
+  const searchParams = new URLSearchParams(params);
+  const url = `${THEMEALDB_BASE}/${path}?${searchParams}`;
+  const cached = cache.get(url);
+
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
+
+  const response = await fetch(url, {
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`TheMealDB returned HTTP ${response.status}`);
+  }
+
+  const data = await response.json();
+  cache.set(url, { data, expiresAt: Date.now() + CACHE_TTL_MS });
+  return data;
+}
+
+function getQueryString(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function normalizeIngredientName(ingredient) {
+  return ingredient.trim().toLocaleLowerCase().replace(/\s+/g, ' ');
+}
+
+function getIngredientSelections(value) {
+  if (!Array.isArray(value) || value.length > 20) {
+    return null;
+  }
+
+  const selections = value.map((ingredient) =>
+    typeof ingredient === 'string' ? ingredient.trim() : '',
+  );
+  if (selections.some((ingredient) => !ingredient || ingredient.length > 100)) {
+    return null;
+  }
+
+  return [...new Set(selections)];
+}
+
+async function fetchMealsByFirstLetter() {
+  const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
+  const meals = [];
+
+  for (let index = 0; index < letters.length; index += 5) {
+    const batch = letters.slice(index, index + 5);
+    const results = await Promise.all(
+      batch.map((letter) => fetchMealDB('search.php', { f: letter })),
+    );
+    meals.push(...results.flatMap((result) => result.meals || []));
+  }
+
+  return [...new Map(meals.map((meal) => [meal.idMeal, meal])).values()];
+}
+
+async function fetchMealDetails(mealIds) {
+  const meals = [];
+
+  for (let index = 0; index < mealIds.length; index += 8) {
+    const batch = mealIds.slice(index, index + 8);
+    const results = await Promise.all(
+      batch.map((id) => fetchMealDB('lookup.php', { i: id })),
+    );
+    meals.push(...results.flatMap((result) => result.meals || []));
+  }
+
+  return meals;
+}
+
+function hasSelectedIngredients(meal, included, excluded) {
+  const mealIngredients = new Set(
+    Array.from({ length: 20 }, (_, index) => meal[`strIngredient${index + 1}`])
+      .filter((ingredient) => typeof ingredient === 'string' && ingredient.trim())
+      .map(normalizeIngredientName),
+  );
+
+  return (
+    included.every((ingredient) =>
+      mealIngredients.has(normalizeIngredientName(ingredient)),
+    ) &&
+    excluded.every(
+      (ingredient) => !mealIngredients.has(normalizeIngredientName(ingredient)),
+    )
+  );
+}
+
+function sendApiError(res, error, message) {
+  console.error(message, error);
+  res.status(502).json({
+    success: false,
+    message: 'ไม่สามารถเชื่อมต่อ TheMealDB ได้ในขณะนี้',
+  });
+}
+
+app.get('/api/search', async (req, res) => {
+  const keyword = getQueryString(req.query.q);
+  if (!keyword || keyword.length > 100) {
+    return res.status(400).json({
+      success: false,
+      message: 'กรุณาระบุคำค้นหาไม่เกิน 100 ตัวอักษร',
+    });
+  }
+
+  try {
+    const result = await fetchMealDB('search.php', { s: keyword });
+    const meals = (result.meals || []).map(normalizeMeal);
+    res.json({
+      success: true,
+      count: meals.length,
+      keyword,
+      data: meals,
+    });
+  } catch (error) {
+    sendApiError(res, error, 'Meal search failed:');
+  }
+});
+
+app.get('/api/meal/:id', async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Meal ID ต้องเป็นตัวเลข',
+    });
+  }
+
+  try {
+    const result = await fetchMealDB('lookup.php', { i: req.params.id });
+    const meal = result.meals?.[0];
+    if (!meal) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบข้อมูลเมนูอาหาร',
+      });
+    }
+    res.json({ success: true, data: normalizeMeal(meal) });
+  } catch (error) {
+    sendApiError(res, error, 'Meal lookup failed:');
+  }
+});
+
+app.get('/api/ingredients', async (req, res) => {
+  const ingredient = getQueryString(req.query.i);
+  if (!ingredient || ingredient.length > 100) {
+    return res.status(400).json({
+      success: false,
+      message: 'กรุณาระบุวัตถุดิบไม่เกิน 100 ตัวอักษร',
+    });
+  }
+
+  try {
+    const result = await fetchMealDB('filter.php', { i: ingredient });
+    const meals = (result.meals || []).map(normalizeMeal);
+    res.json({ success: true, count: meals.length, data: meals });
+  } catch (error) {
+    sendApiError(res, error, 'Ingredient search failed:');
+  }
+});
+
+app.get('/api/ingredient-list', async (_req, res) => {
+  try {
+    const result = await fetchMealDB('list.php', { i: 'list' });
+    const ingredients = [...new Set(
+      (result.meals || [])
+        .map((item) => item.strIngredient?.trim())
+        .filter(Boolean),
+    )].sort((first, second) => first.localeCompare(second));
+    res.json({ success: true, count: ingredients.length, data: ingredients });
+  } catch (error) {
+    sendApiError(res, error, 'Ingredient list failed:');
+  }
+});
+
+app.post('/api/ingredient-search', async (req, res) => {
+  const included = getIngredientSelections(req.body?.included);
+  const excluded = getIngredientSelections(req.body?.excluded);
+
+  if (!included || !excluded) {
+    return res.status(400).json({
+      success: false,
+      message: 'รายการวัตถุดิบไม่ถูกต้อง (สูงสุด 20 รายการต่อส่วน)',
+    });
+  }
+
+  if (included.length === 0 && excluded.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'กรุณาเลือกวัตถุดิบอย่างน้อย 1 รายการ',
+    });
+  }
+
+  const includedNames = new Set(included.map(normalizeIngredientName));
+  if (excluded.some((ingredient) => includedNames.has(normalizeIngredientName(ingredient)))) {
+    return res.status(400).json({
+      success: false,
+      message: 'วัตถุดิบเดียวกันไม่สามารถอยู่ในรายการที่มีและไม่ต้องการได้',
+    });
+  }
+
+  try {
+    let candidateIds;
+    if (included.length > 0) {
+      const results = await Promise.all(
+        included.map((ingredient) =>
+          fetchMealDB('filter.php', {
+            i: ingredient.trim().replace(/\s+/g, '_'),
+          }),
+        ),
+      );
+      const idsByIngredient = results.map(
+        (result) => new Set((result.meals || []).map((meal) => meal.idMeal)),
+      );
+      candidateIds = [...idsByIngredient[0]].filter((id) =>
+        idsByIngredient.every((ids) => ids.has(id)),
+      );
+
+      if (candidateIds.length === 0) {
+        return res.json({ success: true, count: 0, data: [] });
+      }
+    }
+
+    const candidates =
+      !candidateIds || candidateIds.length > 100
+        ? await fetchMealsByFirstLetter()
+        : await fetchMealDetails(candidateIds);
+    const candidateIdSet = candidateIds ? new Set(candidateIds) : null;
+    const meals = candidates
+      .filter((meal) => !candidateIdSet || candidateIdSet.has(meal.idMeal))
+      .filter((meal) => hasSelectedIngredients(meal, included, excluded))
+      .map(normalizeMeal);
+
+    res.json({ success: true, count: meals.length, data: meals });
+  } catch (error) {
+    sendApiError(res, error, 'Ingredient search failed:');
+  }
+});
+
+app.get('/api/categories', async (_req, res) => {
+  try {
+    const result = await fetchMealDB('list.php', { c: 'list' });
+    const categories = (result.meals || []).map((item) => item.strCategory);
+    res.json({ success: true, count: categories.length, data: categories });
+  } catch (error) {
+    sendApiError(res, error, 'Category list failed:');
+  }
+});
+
+app.get('/api/areas', async (_req, res) => {
+  try {
+    const result = await fetchMealDB('list.php', { a: 'list' });
+    const areas = (result.meals || []).map((item) => item.strArea);
+    res.json({ success: true, count: areas.length, data: areas });
+  } catch (error) {
+    sendApiError(res, error, 'Area list failed:');
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`FoodFinder API listening at http://localhost:${PORT}`);
+>>>>>>> 41434fc (แก้ไขการเชื่อมหน้า)
 });
 
 app.post('/watchlist', async (req, res) => {
