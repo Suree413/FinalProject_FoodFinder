@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import {
   pageGraph,
@@ -31,10 +30,7 @@ function Navigation() {
   const currentPage = getCurrentPage(location.pathname);
 
   // อ่านหน้าที่เชื่อมต่อจาก Graph
-  const connectedPages = getConnectedPages(currentPage);
-
-  // แสดงเฉพาะหน้าที่มี URL ใช้งานได้
-  const navigationPages = connectedPages.filter(
+const navigationPages = Object.keys(pagePaths).filter(
   (page) =>
     pageGraph[page] &&
     pagePaths[page] &&
