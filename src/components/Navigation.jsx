@@ -24,7 +24,8 @@ function Navigation() {
   return (
     <nav className="main-navigation">
       <Link to="/" className="nav-brand">
-        🍽️ FoodFinder
+        <span className="brand-mark" aria-hidden="true">F</span>
+        <span className="brand-wordmark">FOOD FINDER<small>THE RECIPE EDITION</small></span>
       </Link>
 
       <div className="nav-links">

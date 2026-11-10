@@ -118,34 +118,63 @@ function MealDetail() {
 
   if (!meal) return null;
 
+  const instructions = (meal.strInstructions || "")
+    .split(/\r?\n|(?<=[.!?])\s+/)
+    .map((step) => step.trim())
+    .filter(Boolean);
+
   return (
     <div className="meal-detail">
       <button className="back-button" onClick={goBack}>← Back</button>
 
-      <h1>{meal.strMeal}</h1>
+      <section className="recipe-hero">
+        <div className="recipe-heading">
+          <p className="eyebrow">From the Food Finder kitchen</p>
+          <h1>{meal.strMeal}</h1>
+          <div className="recipe-meta">
+            {meal.strCategory && <span>{meal.strCategory}</span>}
+            {meal.strArea && <span>{meal.strArea}</span>}
+          </div>
+          <p className="recipe-intro">A recipe worth slowing down for. Gather your ingredients and enjoy every step.</p>
+          <div className="detail-buttons">
+            <button className="primary-button" onClick={addToQueue}>Add to Queue</button>
+            <button className="secondary-button" onClick={saveRecipe}>Save Recipe</button>
+          </div>
+        </div>
+        <img className="recipe-image" src={meal.strMealThumb} alt={meal.strMeal} />
+      </section>
 
-      <img
-        src={meal.strMealThumb}
-        alt={meal.strMeal}
-        width="350"
-      />
+      <div className="recipe-content">
+        <section className="recipe-ingredients">
+          <p className="eyebrow">What you'll need</p>
+          <h2>Ingredients</h2>
+          <ul>
+            {getIngredients().map((item, index) => (
+              <li key={index}>
+                <span>{item.name}</span>
+                <span>{item.measure}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-      <p>
-        <strong>Category:</strong> {meal.strCategory}
-      </p>
-
-      <p>
-        <strong>Area:</strong> {meal.strArea}
-      </p>
-
-      <div className="detail-buttons">
-        <button onClick={addToQueue}>
-          ➕ Add to queue
-        </button>
-
-        <button onClick={saveRecipe}>
-          ❤️ Save recipe
-        </button>
+        <section className="recipe-instructions">
+          <p className="eyebrow">Made with care</p>
+          <h2>Method</h2>
+          <ol>
+            {instructions.map((step, index) => (
+              <li key={`${index}-${step}`}>
+                <span className="instruction-number">{String(index + 1).padStart(2, "0")}</span>
+                <p>{step}</p>
+              </li>
+            ))}
+          </ol>
+          {meal.strYoutube && (
+            <a className="video-link" href={meal.strYoutube} target="_blank" rel="noreferrer">
+              Watch the cooking video <span aria-hidden="true">↗</span>
+            </a>
+          )}
+        </section>
       </div>
       {storageMessage && (
         <p
@@ -154,32 +183,6 @@ function MealDetail() {
         >
           {storageMessage}
         </p>
-      )}
-
-      <h2>🥕 Ingredients</h2>
-
-      <ul>
-        {getIngredients().map((item, index) => (
-          <li key={index}>
-            {item.name} - {item.measure}
-          </li>
-        ))}
-      </ul>
-
-      <h2>👩‍🍳 Instructions</h2>
-
-      <p style={{ whiteSpace: "pre-line" }}>
-        {meal.strInstructions}
-      </p>
-
-      {meal.strYoutube && (
-        <a
-          href={meal.strYoutube}
-          target="_blank"
-          rel="noreferrer"
-        >
-          ▶ Watch Cooking Video
-        </a>
       )}
     </div>
   );

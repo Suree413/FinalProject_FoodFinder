@@ -195,12 +195,25 @@ function Home() {
 
   return (
     <div className="home-page">
-      <h1>🍽️ Welcome to FoodFinder</h1>
-      <p>
-        {showingRecommendations
-          ? "Fresh ideas from TheMealDB"
-          : "Find your next favorite meal"}
-      </p>
+      <section className="home-hero">
+        <div className="home-hero-copy">
+          <p className="eyebrow">A little inspiration for your table</p>
+          <h1>Discover Something Delicious.</h1>
+          <p className="hero-description">
+            Thoughtful recipes, beautiful ingredients, and something wonderful
+            to make tonight.
+          </p>
+        </div>
+        <div className="home-hero-image">
+          <img
+            src={meals[0]?.strMealThumb || "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1400&q=85"}
+            alt={meals[0]?.strMeal || "A beautifully prepared meal"}
+          />
+          <span className="hero-image-caption">
+            {showingRecommendations ? "Freshly picked" : "Find your next favorite"}
+          </span>
+        </div>
+      </section>
 
       <SearchBar
         className="home-search"
@@ -208,7 +221,7 @@ function Home() {
         onSubmit={searchMeals}
         submitLabel="Search"
         extraActions={
-          <button type="button" onClick={loadRandomMeal} disabled={loading}>
+          <button className="secondary-button" type="button" onClick={loadRandomMeal} disabled={loading}>
             Surprise me
           </button>
         }
@@ -294,6 +307,15 @@ function Home() {
         </p>
       )}
 
+      {visibleMeals.length > 0 && !loading && (
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">The recipe collection</p>
+            <h2>{showingRecommendations ? "Editor's picks" : "Recipes to explore"}</h2>
+          </div>
+          <span>{visibleMeals.length} {visibleMeals.length === 1 ? "recipe" : "recipes"}</span>
+        </div>
+      )}
       <div className="meal-grid">
         {visibleMeals.map((meal) => (
           <MealCard

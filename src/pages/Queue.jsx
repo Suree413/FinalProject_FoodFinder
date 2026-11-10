@@ -71,19 +71,25 @@ function Queue() {
 
   return (
     <div className="queue-page">
-      <h1>📋 My Food Queue</h1>
-      <p>Your meals, in the order you added them (FIFO).</p>
+      <div className="queue-heading">
+        <div>
+          <p className="eyebrow">Collected for later</p>
+          <h1>Your Food Collection</h1>
+          <p>Your recipes, thoughtfully gathered in the order you added them.</p>
+        </div>
+        <span className="queue-count"><strong>{queue.length}</strong> {queue.length === 1 ? "recipe" : "recipes"}</span>
+      </div>
 
       <div className="queue-actions">
         <button type="button" onClick={peekNextMeal}>
-          Next up
+          Next Up
         </button>
         <button
           type="button"
           onClick={dequeueNextMeal}
           disabled={queue.length === 0}
         >
-          Remove first
+          Remove Next
         </button>
         <button
           type="button"
@@ -100,13 +106,18 @@ function Queue() {
       )}
       {peekedMeal && (
         <p className="peeked-meal">
-          Up next:{" "}
+          Next at the table:{" "}
           <Link to={`/meal/${peekedMeal.idMeal}`}>{peekedMeal.strMeal}</Link>
         </p>
       )}
 
       {queue.length === 0 ? (
-        <p>Your queue is empty. Add a meal you love!</p>
+        <div className="empty-collection">
+          <span aria-hidden="true">✳</span>
+          <h2>A collection in the making</h2>
+          <p>Save a recipe to your queue and it will be waiting here for you.</p>
+          <Link to="/">Explore recipes</Link>
+        </div>
       ) : (
         <div className="meal-grid">
           {queue.map((meal, index) => (
