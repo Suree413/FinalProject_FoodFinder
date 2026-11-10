@@ -5,7 +5,7 @@
 .app-content {
   width: min(1240px, 100%);
   margin: 0 auto;
-  padding: 48px 36px 88px;
+  padding: 48px 36px calc(24px + var(--bottom-navigation-height) + env(safe-area-inset-bottom));
 }
 
 button,
@@ -815,9 +815,107 @@ select:focus-visible {
   margin-top: 12px;
 }
 
+.toast-notification {
+  position: fixed;
+  z-index: 20;
+  top: 24px;
+  right: max(24px, calc((100vw - 1240px) / 2));
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: min(440px, calc(100vw - 36px));
+  padding: 16px;
+  border: 1px solid rgb(104 123 96 / 25%);
+  border-radius: 16px;
+  background: var(--color-white);
+  box-shadow: 0 16px 48px rgb(56 59 51 / 18%);
+  animation: toast-in-out 3.2s ease both;
+}
+
+.toast-icon {
+  display: grid;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e7ecdf;
+  color: var(--color-sage-deep);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.toast-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 4px;
+  color: var(--color-ink);
+  font-size: 0.83rem;
+  line-height: 1.4;
+}
+
+.toast-copy strong {
+  font-size: 0.84rem;
+}
+
+.toast-copy > span {
+  overflow: hidden;
+  color: var(--color-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toast-link {
+  flex: 0 0 auto;
+  padding: 9px 11px;
+  border-radius: 999px;
+  background: var(--color-sage-deep);
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.toast-link:hover {
+  transform: translateY(-1px);
+  background: #52654b;
+}
+
+.toast-warning .toast-icon {
+  background: #f3edda;
+  color: #8a6c2f;
+}
+
+.toast-error {
+  border-color: rgb(165 61 50 / 28%);
+}
+
+.toast-error .toast-icon {
+  background: #f6e5e2;
+  color: #a53d32;
+}
+
+@keyframes toast-in-out {
+  0% {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  8%,
+  88% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
 @media (max-width: 800px) {
   .app-content {
-    padding: 38px 24px 68px;
+    padding: 38px 24px calc(24px + var(--bottom-navigation-height) + env(safe-area-inset-bottom));
   }
 
   .home-hero {
@@ -846,7 +944,7 @@ select:focus-visible {
 
 @media (max-width: 600px) {
   .app-content {
-    padding: 29px 18px 56px;
+    padding: 29px 18px calc(24px + var(--bottom-navigation-height) + env(safe-area-inset-bottom));
   }
 
   .home-hero {
@@ -1019,6 +1117,19 @@ select:focus-visible {
   .queue-actions button {
     padding: 9px 12px;
     font-size: 0.74rem;
+  }
+
+  .toast-notification {
+    top: 12px;
+    right: 12px;
+    width: calc(100vw - 24px);
+    gap: 9px;
+    padding: 12px;
+  }
+
+  .toast-link {
+    padding: 8px 9px;
+    font-size: 0.7rem;
   }
 }
 

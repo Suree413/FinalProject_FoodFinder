@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Loading from "../components/Loading";
 import MealCard from "../components/MealCard";
 import SearchBar from "../components/SearchBar";
+import Toast from "../components/Toast";
 import { addMealToQueue, saveRecipe } from "../utils/MealQueue";
 import {
   getAreas,
@@ -14,6 +15,7 @@ import {
 function Home() {
   const initialSearch = "chicken";
   const searchRequestId = useRef(0);
+  const toastId = useRef(0);
   const [keyword, setKeyword] = useState("");
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +30,8 @@ function Home() {
   const [filterOptionsError, setFilterOptionsError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
   const [actionError, setActionError] = useState(false);
+  const [addedQueueIds, setAddedQueueIds] = useState(() => new Set());
+  const [toast, setToast] = useState(null);
 
   const includeMealFilterOptions = (results) => {
     setCategories((current) => [
@@ -172,22 +176,40 @@ function Home() {
       });
     });
 
+  const showToast = (toastData) => {
+    setToast({ ...toastData, id: ++toastId.current });
+  };
+
   const handleMealAction = (action, meal) => {
     try {
-      const added = action === "queue"
-        ? addMealToQueue(meal)
-        : saveRecipe(meal);
+      if (action === "queue") {
+        const added = addMealToQueue(meal);
+        if (added) {
+          setAddedQueueIds((current) => new Set(current).add(String(meal.idMeal)));
+          showToast({ variant: "success", mealName: meal.strMeal });
+        } else {
+          showToast({
+            variant: "warning",
+            message: "This meal is already in your Queue.",
+          });
+        }
+        return;
+      }
+
+      const added = saveRecipe(meal);
       setActionError(!added);
       setActionMessage(
-        added
-          ? action === "queue"
-            ? `Added ${meal.strMeal} to your queue.`
-            : `Saved ${meal.strMeal} to your recipes.`
-          : action === "queue"
-            ? "This meal is already in your queue."
-            : "This meal is already saved.",
+        added ? `Saved ${meal.strMeal} to your recipes.` : "This meal is already saved.",
       );
     } catch (storageError) {
+      if (action === "queue") {
+        showToast({
+          variant: "error",
+          message: "Couldn't add this meal to your Queue. Please try again.",
+          mealName: meal.strMeal,
+        });
+        return;
+      }
       setActionError(true);
       setActionMessage(storageError.message || "Couldn't save this meal.");
     }
@@ -323,7 +345,9 @@ function Home() {
             meal={meal}
             actions={[
               {
-                label: "Add to queue",
+                label: addedQueueIds.has(String(meal.idMeal))
+                  ? "Added to Queue ✓"
+                  : "Add to Queue",
                 onAction: (item) => handleMealAction("queue", item),
               },
               {
@@ -334,6 +358,15 @@ function Home() {
           />
         ))}
       </div>
+      {toast && (
+        <Toast
+          key={toast.id}
+          variant={toast.variant}
+          message={toast.message}
+          mealName={toast.mealName}
+          onDismiss={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import Loading from "../components/Loading";
+import Toast from "../components/Toast";
 import { getMealDetailsById } from "../services/mealApi";
 import { useNavigationHistory } from "../context/navigationHistoryContext";
 import {
@@ -18,6 +19,9 @@ function MealDetail() {
   const [error, setError] = useState("");
   const [storageMessage, setStorageMessage] = useState("");
   const [storageError, setStorageError] = useState(false);
+  const [queueAdded, setQueueAdded] = useState(false);
+  const [toast, setToast] = useState(null);
+  const toastId = useRef(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -69,16 +73,27 @@ function MealDetail() {
   const addToQueue = () => {
     try {
       if (!addMealToQueue(meal)) {
-        setStorageError(true);
-        setStorageMessage("This meal is already in your queue.");
+        setToast({
+          id: ++toastId.current,
+          variant: "warning",
+          message: "This meal is already in your Queue.",
+        });
         return;
       }
 
-      setStorageError(false);
-      setStorageMessage("Added to your queue.");
-    } catch (storageException) {
-      setStorageError(true);
-      setStorageMessage(storageException.message || "Couldn't add this meal to your queue.");
+      setQueueAdded(true);
+      setToast({
+        id: ++toastId.current,
+        variant: "success",
+        mealName: meal.strMeal,
+      });
+    } catch {
+      setToast({
+        id: ++toastId.current,
+        variant: "error",
+        message: "Couldn't add this meal to your Queue. Please try again.",
+        mealName: meal.strMeal,
+      });
     }
   };
 
@@ -137,7 +152,9 @@ function MealDetail() {
           </div>
           <p className="recipe-intro">A recipe worth slowing down for. Gather your ingredients and enjoy every step.</p>
           <div className="detail-buttons">
-            <button className="primary-button" onClick={addToQueue}>Add to Queue</button>
+            <button className="primary-button" onClick={addToQueue}>
+              {queueAdded ? "Added to Queue ✓" : "Add to Queue"}
+            </button>
             <button className="secondary-button" onClick={saveRecipe}>Save Recipe</button>
           </div>
         </div>
@@ -183,6 +200,15 @@ function MealDetail() {
         >
           {storageMessage}
         </p>
+      )}
+      {toast && (
+        <Toast
+          key={toast.id}
+          variant={toast.variant}
+          message={toast.message}
+          mealName={toast.mealName}
+          onDismiss={() => setToast(null)}
+        />
       )}
     </div>
   );
