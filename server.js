@@ -1,15 +1,22 @@
 import express from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
-const THEMEALDB_BASE = 'https://www.themealdb.com/api/json/v1/1';
+const THEMEALDB_API_KEY = encodeURIComponent(
+  process.env.THEMEALDB_API_KEY?.trim() || '1',
+);
+const THEMEALDB_BASE = `https://www.themealdb.com/api/json/v1/${THEMEALDB_API_KEY}`;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const cache = new Map();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 app.use(express.json());
+app.use((req, _res, next) => {
+  req.url = req.url.replace(/^\/api\/legacy(?=\/|$)/, '') || '/';
+  next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 function normalizeMeal(meal) {
@@ -38,10 +45,10 @@ function normalizeMeal(meal) {
   };
 }
 
-async function fetchMealDB(endpoint, params = {}) {
+async function fetchMealDB(endpoint, params = {}, { cacheResponse = true } = {}) {
   const searchParams = new URLSearchParams(params);
   const url = `${THEMEALDB_BASE}/${endpoint}?${searchParams}`;
-  const cached = cache.get(url);
+  const cached = cacheResponse ? cache.get(url) : null;
   if (cached && cached.expiresAt > Date.now()) {
     return cached.data;
   }
@@ -55,7 +62,9 @@ async function fetchMealDB(endpoint, params = {}) {
   }
 
   const data = await response.json();
-  cache.set(url, { data, expiresAt: Date.now() + CACHE_TTL_MS });
+  if (cacheResponse) {
+    cache.set(url, { data, expiresAt: Date.now() + CACHE_TTL_MS });
+  }
   return data;
 }
 
@@ -220,6 +229,22 @@ app.get('/api/search', async (req, res) => {
     return res.json({ success: true, count: data.length, keyword, data });
   } catch (error) {
     return sendApiError(res, error, 'Meal search failed');
+  }
+});
+
+app.get('/api/random', async (_req, res) => {
+  try {
+    const result = await fetchMealDB('random.php', {}, { cacheResponse: false });
+    const meal = result.meals?.[0];
+    if (!meal) {
+      return res.status(502).json({
+        success: false,
+        message: 'TheMealDB ไม่ได้ส่งข้อมูลเมนูสุ่มกลับมา',
+      });
+    }
+    return res.json({ success: true, data: normalizeMeal(meal) });
+  } catch (error) {
+    return sendApiError(res, error, 'Random meal request failed');
   }
 });
 
@@ -553,7 +578,11 @@ app.post('/undo', (_req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`FoodFinder API listening at http://localhost:${PORT}`);
-  loadMeals();
-});
+export default app;
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  app.listen(PORT, () => {
+    console.log(`FoodFinder API listening at http://localhost:${PORT}`);
+    loadMeals();
+  });
+}

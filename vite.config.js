@@ -7,6 +7,10 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': 'http://localhost:3000',
+      '/meals': 'http://localhost:3000',
+      '/watchlist': 'http://localhost:3000',
+      '/history': 'http://localhost:3000',
+      '/undo': 'http://localhost:3000',
     },
   },
 })

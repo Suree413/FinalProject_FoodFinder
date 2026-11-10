@@ -7,6 +7,7 @@ import { addMealToQueue, saveRecipe } from "../utils/MealQueue";
 import {
   getAreas,
   getCategories,
+  getRandomMeal,
   searchMealsByKeyword,
 } from "../services/mealApi";
 
@@ -135,6 +136,32 @@ function Home() {
     }
   };
 
+  const loadRandomMeal = async () => {
+    const requestId = ++searchRequestId.current;
+    setLoading(true);
+    setError("");
+    setMeals([]);
+    setSearched(true);
+    setShowingRecommendations(false);
+    setCategory("");
+    setArea("");
+
+    try {
+      const meal = await getRandomMeal();
+      if (requestId !== searchRequestId.current) return;
+      setMeals([meal]);
+      includeMealFilterOptions([meal]);
+    } catch (requestError) {
+      if (requestId === searchRequestId.current) {
+        setError(requestError.message || "สุ่มเมนูอาหารไม่สำเร็จ");
+      }
+    } finally {
+      if (requestId === searchRequestId.current) {
+        setLoading(false);
+      }
+    }
+  };
+
   const visibleMeals = [...meals]
     .filter((meal) => !category || meal.strCategory === category)
     .filter((meal) => !area || meal.strArea === area)
@@ -180,6 +207,11 @@ function Home() {
         loading={loading}
         onSubmit={searchMeals}
         submitLabel="Search"
+        extraActions={
+          <button type="button" onClick={loadRandomMeal} disabled={loading}>
+            สุ่มเมนู
+          </button>
+        }
       >
         <input
           type="text"

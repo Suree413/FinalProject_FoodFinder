@@ -5,7 +5,7 @@ async function requestApiData(path, options) {
   } catch (error) {
     if (error.name === "AbortError") throw error;
     throw new Error(
-      "เชื่อมต่อ FoodFinder API ไม่ได้ กรุณาตรวจว่า Express กำลังทำงานด้วยคำสั่ง npm run server",
+      "เชื่อมต่อ FoodFinder API ไม่ได้ กรุณาตรวจสอบ API URL และสถานะการ Deploy (ในเครื่องให้รัน npm run server)",
     );
   }
 
@@ -15,7 +15,7 @@ async function requestApiData(path, options) {
   } catch {
     if (response.status === 502) {
       throw new Error(
-        "เชื่อมต่อ Express API ไม่ได้ กรุณาเปิด backend ด้วยคำสั่ง npm run server",
+        "FoodFinder API ยังไม่พร้อมใช้งาน กรุณาตรวจสอบสถานะ Express API หรือ Vercel Function",
       );
     }
     throw new Error("FoodFinder API ส่งข้อมูลที่อ่านไม่ได้กลับมา");
@@ -41,6 +41,14 @@ export async function searchMealsByKeyword(keyword, signal) {
     throw new Error("FoodFinder API ส่งผลการค้นหาในรูปแบบที่ไม่ถูกต้อง");
   }
   return meals;
+}
+
+export async function getRandomMeal(signal) {
+  const meal = await requestApiData("/api/random", { signal });
+  if (!meal || typeof meal !== "object" || !meal.idMeal) {
+    throw new Error("FoodFinder API ส่งข้อมูลเมนูสุ่มในรูปแบบที่ไม่ถูกต้อง");
+  }
+  return meal;
 }
 
 export function getMealDetailsById(id, signal) {

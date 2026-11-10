@@ -20,8 +20,32 @@ npm run server
 npm run dev
 ```
 
-Vite proxies `/api` requests to `http://localhost:3000`. If port 5173 is
-occupied, Vite prints a different local URL; open the URL it prints.
+Vite proxies same-origin `/api` requests and the legacy root-level endpoints to
+`http://localhost:3000`. Keep both processes running during local development.
+If port 5173 is occupied, Vite prints a different local URL; open the URL it
+prints.
+
+## Deploy to Vercel
+
+Import the repository into Vercel and use the project root as the Root
+Directory. `vercel.json` builds the Vite frontend into `dist` and rewrites
+client-side routes to `index.html`; `api/[...path].js` exposes the existing
+Express routes as a Vercel Function. It also maps the existing root-level
+`/meals`, `/watchlist`, `/history`, and `/undo` endpoints to that function.
+The frontend keeps using relative URLs, so production requests go to the same
+Vercel domain instead of `localhost`.
+
+No environment variables are required for the default TheMealDB public API
+key. If you have a different TheMealDB API key, set `THEMEALDB_API_KEY` in
+Vercel Project Settings → Environment Variables for the environments you use.
+This is a server-only variable; do not prefix it with `VITE_`.
+
+Vercel Functions are stateless and may run on different instances. The active
+React app stores Queue and Saved Recipes in browser Local Storage and uses its
+client-side Stack/Hash Table implementations; those features do not depend on
+the legacy in-memory Queue/Stack endpoints in `server.js`. The legacy endpoints
+remain available for compatibility, but their in-memory Queue/Stack state is
+not durable across Vercel Function instances.
 
 ## Project structure
 
@@ -97,19 +121,26 @@ App
 ## API flow
 
 ```text
-React page → mealApi.js → Vite /api proxy → Express server.js → TheMealDB
-           ← normalized JSON ←             ← cached API response
+Development:  React page → /api → Vite proxy → Express server.js → TheMealDB
+Production:   React page → /api → Vercel Function → Express server.js → TheMealDB
+                          ← normalized JSON ←                 ← cached response
 ```
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | GET | `/api/search?q=<name>` | Search meals by name |
+| GET | `/api/random` | Get a random meal |
+| GET | `/api/meals?search=&category=&area=` | Search/filter meal lists |
 | GET | `/api/meal/:id` | Get a meal's details |
 | GET | `/api/ingredients?i=<ingredient>` | Find meals by ingredient |
 | GET | `/api/ingredient-list` | List selectable ingredients |
 | POST | `/api/ingredient-search` | Search by included and/or excluded ingredients |
 | GET | `/api/categories` | List meal categories |
 | GET | `/api/areas` | List meal areas |
+
+The legacy dashboard endpoints (`/meals`, `/watchlist`, `/history`, and
+`/undo`) are also proxied in development and rewritten to the Function on
+Vercel.
 
 The API validates required search terms and numeric meal IDs, returns explicit
 HTTP errors, normalizes TheMealDB's response, and caches successful responses
