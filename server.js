@@ -130,7 +130,7 @@ function sendApiError(res, error, context) {
   console.error(`${context}:`, error);
   res.status(502).json({
     success: false,
-    message: 'ไม่สามารถเชื่อมต่อ TheMealDB ได้ในขณะนี้',
+    message: 'Could not connect to TheMealDB right now.',
   });
 }
 
@@ -228,7 +228,7 @@ app.get('/api/search', async (req, res) => {
   if (!keyword || keyword.length > 100) {
     return res.status(400).json({
       success: false,
-      message: 'กรุณาระบุคำค้นหาไม่เกิน 100 ตัวอักษร',
+      message: 'Enter a search term of up to 100 characters.',
     });
   }
 
@@ -248,7 +248,7 @@ app.get('/api/random', async (_req, res) => {
     if (!meal) {
       return res.status(502).json({
         success: false,
-        message: 'TheMealDB ไม่ได้ส่งข้อมูลเมนูสุ่มกลับมา',
+        message: 'TheMealDB did not return a random meal.',
       });
     }
     return res.json({ success: true, data: normalizeMeal(meal) });
@@ -293,7 +293,7 @@ app.get('/api/meals', async (req, res) => {
     return res.json({
       success: true,
       count: data.length,
-      message: data.length ? undefined : 'ไม่พบเมนูอาหารตามเงื่อนไขที่ค้นหา',
+      message: data.length ? undefined : 'No meals matched your search filters.',
       data,
     });
   } catch (error) {
@@ -305,7 +305,7 @@ app.get('/api/meal/:id', async (req, res) => {
   if (!/^\d+$/.test(req.params.id)) {
     return res.status(400).json({
       success: false,
-      message: 'Meal ID ต้องเป็นตัวเลข',
+      message: 'Meal ID must be a number.',
     });
   }
 
@@ -315,7 +315,7 @@ app.get('/api/meal/:id', async (req, res) => {
     if (!meal) {
       return res.status(404).json({
         success: false,
-        message: 'ไม่พบข้อมูลเมนูอาหาร',
+        message: 'Meal not found.',
       });
     }
     return res.json({ success: true, data: normalizeMeal(meal) });
@@ -329,7 +329,7 @@ app.get('/api/ingredients', async (req, res) => {
   if (!ingredient || ingredient.length > 100) {
     return res.status(400).json({
       success: false,
-      message: 'กรุณาระบุวัตถุดิบไม่เกิน 100 ตัวอักษร',
+      message: 'Enter an ingredient of up to 100 characters.',
     });
   }
 
@@ -362,13 +362,13 @@ app.post('/api/ingredient-search', async (req, res) => {
   if (!included || !excluded) {
     return res.status(400).json({
       success: false,
-      message: 'รายการวัตถุดิบไม่ถูกต้อง (สูงสุด 20 รายการต่อส่วน)',
+      message: 'Invalid ingredient list (up to 20 items per list).',
     });
   }
   if (included.length === 0 && excluded.length === 0) {
     return res.status(400).json({
       success: false,
-      message: 'กรุณาเลือกวัตถุดิบอย่างน้อย 1 รายการ',
+      message: 'Choose at least one ingredient.',
     });
   }
 
@@ -376,7 +376,7 @@ app.post('/api/ingredient-search', async (req, res) => {
   if (excluded.some((ingredient) => includedNames.has(normalizeIngredientName(ingredient)))) {
     return res.status(400).json({
       success: false,
-      message: 'วัตถุดิบเดียวกันไม่สามารถอยู่ในรายการที่มีและไม่ต้องการได้',
+      message: 'The same ingredient cannot be both included and excluded.',
     });
   }
 
@@ -491,51 +491,51 @@ app.post('/watchlist', async (req, res) => {
   try {
     const id = Number(req.body?.id);
     if (!Number.isInteger(id) || id <= 0) {
-      return res.status(400).json({ error: 'Meal ID ไม่ถูกต้อง' });
+      return res.status(400).json({ error: 'Invalid meal ID.' });
     }
     if (watchlist.items.some((item) => Number(item.id) === id)) {
-      return res.status(409).json({ error: 'เมนูนี้อยู่ใน Queue แล้ว' });
+      return res.status(409).json({ error: 'This meal is already in the queue.' });
     }
 
     let meal = meals.find((item) => Number(item.id) === id);
     if (!meal) {
       const result = await fetchMealDB('lookup.php', { i: String(id) });
       if (!result.meals?.[0]) {
-        return res.status(404).json({ error: 'ไม่พบเมนูอาหารนี้' });
+        return res.status(404).json({ error: 'Meal not found.' });
       }
       meal = normalizeMeal(result.meals[0]);
     }
 
     watchlist.enqueue(meal);
-    history.push({ action: 'ADD', meal, time: new Date().toLocaleTimeString('th-TH') });
+    history.push({ action: 'ADD', meal, time: new Date().toLocaleTimeString('en-US') });
     return res.status(201).json({
-      message: `เพิ่ม ${meal.name} เข้าคิวแล้ว`,
+      message: `Added ${meal.name} to the queue.`,
       size: watchlist.size(),
     });
   } catch (error) {
     console.error('Queue add failed:', error);
-    return res.status(502).json({ error: 'ไม่สามารถเพิ่มเมนูเข้า Queue ได้' });
+    return res.status(502).json({ error: 'Could not add the meal to the queue.' });
   }
 });
 
 app.delete('/watchlist/process', (_req, res) => {
   if (watchlist.size() === 0) {
-    return res.status(400).json({ error: 'คิวว่าง ไม่มีเมนูให้เลือก' });
+    return res.status(400).json({ error: 'The queue is empty. Nothing to process.' });
   }
   const meal = watchlist.dequeue();
-  history.push({ action: 'COOK', meal, time: new Date().toLocaleTimeString('th-TH') });
-  return res.json({ message: `เลือก ${meal.name} เรียบร้อย`, size: watchlist.size() });
+  history.push({ action: 'COOK', meal, time: new Date().toLocaleTimeString('en-US') });
+  return res.json({ message: `Selected ${meal.name}.`, size: watchlist.size() });
 });
 
 app.delete('/watchlist/:id', (req, res) => {
   const id = Number(req.params.id);
   const index = watchlist.items.findIndex((item) => Number(item.id) === id);
   if (index === -1) {
-    return res.status(404).json({ error: 'ไม่พบเมนูนี้ใน Queue' });
+    return res.status(404).json({ error: 'Meal not found in the queue.' });
   }
   const [meal] = watchlist.items.splice(index, 1);
-  history.push({ action: 'REMOVE', meal, time: new Date().toLocaleTimeString('th-TH') });
-  return res.json({ message: `นำ ${meal.name} ออกจากคิวแล้ว`, size: watchlist.size() });
+  history.push({ action: 'REMOVE', meal, time: new Date().toLocaleTimeString('en-US') });
+  return res.json({ message: `Removed ${meal.name} from the queue.`, size: watchlist.size() });
 });
 
 app.get('/history', (_req, res) => {
@@ -564,25 +564,25 @@ function applyUndo(entry) {
 app.post('/undo/:position', (req, res) => {
   const position = Number(req.params.position);
   if (!Number.isInteger(position) || position < 0 || position >= history.items.length) {
-    return res.status(404).json({ error: 'ไม่พบรายการประวัติที่เลือก' });
+    return res.status(404).json({ error: 'Selected history item not found.' });
   }
   const stackIndex = history.items.length - 1 - position;
   const [selected] = history.items.splice(stackIndex, 1);
   applyUndo(selected);
   return res.json({
-    message: `ย้อน ${selected.action} ของ ${selected.meal.name} แล้ว`,
+    message: `Undid ${selected.action} for ${selected.meal.name}.`,
     size: watchlist.size(),
   });
 });
 
 app.post('/undo', (_req, res) => {
   if (history.isEmpty()) {
-    return res.status(400).json({ error: 'ไม่มีอะไรให้ย้อนกลับ' });
+    return res.status(400).json({ error: 'There is nothing to undo.' });
   }
   const last = history.pop();
   applyUndo(last);
   return res.json({
-    message: `ย้อน ${last.action} ของ ${last.meal.name} แล้ว`,
+    message: `Undid ${last.action} for ${last.meal.name}.`,
     size: watchlist.size(),
   });
 });

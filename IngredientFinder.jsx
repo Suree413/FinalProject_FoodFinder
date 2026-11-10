@@ -16,7 +16,7 @@ function IngredientFinder() {
       .filter(Boolean);
 
     if (items.length === 0) {
-      setError("กรุณากรอกวัตถุดิบ");
+      setError("Enter at least one ingredient.");
       return;
     }
 
@@ -30,7 +30,7 @@ function IngredientFinder() {
       );
 
       if (results[0].length === 0) {
-        setError("ไม่พบเมนูที่มีวัตถุดิบนี้");
+        setError("No meals found with this ingredient.");
         setLoading(false);
         return;
       }
@@ -43,10 +43,10 @@ function IngredientFinder() {
 
       setMeals(commonMeals);
       if (commonMeals.length === 0) {
-        setError("ไม่พบเมนูที่มีวัตถุดิบตรงกันทั้งหมด");
+        setError("No meals match all of these ingredients.");
       }
     } catch (err) {
-      setError(err.message || "เกิดข้อผิดพลาดในการค้นหา");
+      setError(err.message || "Something went wrong while searching.");
     } finally {
       setLoading(false);
     }
@@ -55,22 +55,22 @@ function IngredientFinder() {
   return (
     <div className="ingredient-page">
       <h1>🥕 Ingredient Finder</h1>
-      <p>ค้นหาเมนูอาหารจากวัตถุดิบที่คุณมี</p>
+      <p>Find meals with ingredients you already have.</p>
 
       <form onSubmit={searchByIngredients} style={{ margin: "20px 0" }}>
         <input
           type="text"
-          placeholder="เช่น chicken, garlic, onion"
+          placeholder="e.g. chicken, garlic, onion"
           value={ingredients}
           onChange={(e) => setIngredients(e.target.value)}
           style={{ padding: "8px", marginRight: "8px", width: "300px" }}
         />
         <button type="submit" disabled={loading}>
-          {loading ? "กำลังค้นหา..." : "ค้นหาเมนู"}
+          {loading ? "Searching..." : "Find meals"}
         </button>
       </form>
 
-      <p style={{ fontSize: "14px", color: "#666" }}>สามารถใส่วัตถุดิบหลายชนิดโดยคั่นด้วย ,</p>
+      <p style={{ fontSize: "14px", color: "#666" }}>Add multiple ingredients, separated by commas.</p>
 
       {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
 
@@ -84,7 +84,7 @@ function IngredientFinder() {
               style={{ borderRadius: "6px" }}
             />
             <h3>{meal.strMeal}</h3>
-            <Link to={`/meal/${meal.idMeal}`}>ดูรายละเอียด</Link>
+            <Link to={`/meal/${meal.idMeal}`}>View recipe</Link>
           </div>
         ))}
       </div>

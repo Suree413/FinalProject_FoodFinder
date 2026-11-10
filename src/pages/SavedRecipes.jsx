@@ -16,17 +16,17 @@ function SavedRecipes() {
     try {
       writeStoredMeals(SAVED_STORAGE_KEY, updated);
       setSaved(updated);
-      setMessage("นำเมนูออกจากรายการโปรดแล้ว");
+      setMessage("Removed from your saved recipes.");
       setError("");
     } catch (storageError) {
-      setError(storageError.message || "อัปเดตรายการโปรดไม่สำเร็จ");
+      setError(storageError.message || "Couldn't update your saved recipes.");
     }
   };
 
   return (
     <div className="saved-page">
       <h1>❤️ Saved Recipes</h1>
-      <p>เมนูอาหารที่คุณบันทึกไว้</p>
+      <p>Your favorite meals, all in one place.</p>
 
       {error && <p className="status-message error-message">{error}</p>}
       {message && !error && (
@@ -34,14 +34,14 @@ function SavedRecipes() {
       )}
 
       {saved.length === 0 ? (
-        <p>ยังไม่มีเมนูที่บันทึกไว้</p>
+        <p>No saved recipes yet. Save a meal to see it here!</p>
       ) : (
         <div className="meal-grid">
           {saved.map((meal) => (
             <MealCard
               key={meal.idMeal}
               meal={meal}
-              actionLabel="นำออกจากรายการโปรด"
+              actionLabel="Remove from saved"
               onAction={(item) => removeRecipe(item.idMeal)}
             />
           ))}

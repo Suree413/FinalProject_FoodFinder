@@ -3,10 +3,10 @@ import { getConnectedPages, pagePaths } from "../utils/Graph";
 import "./Navigation.css";
 
 const pageLabels = {
-  Home: "ค้นหาเมนู",
-  IngredientFinder: "ค้นหาจากวัตถุดิบ",
-  Queue: "คิวเมนู",
-  SavedRecipes: "เมนูที่บันทึก",
+  Home: "Find meals",
+  IngredientFinder: "By ingredient",
+  Queue: "My queue",
+  SavedRecipes: "Saved recipes",
 };
 
 function Navigation() {

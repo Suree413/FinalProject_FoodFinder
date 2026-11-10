@@ -27,7 +27,7 @@ function Queue() {
       setError("");
       return result;
     } catch (storageError) {
-      setError(storageError.message || "บันทึก Queue ไม่สำเร็จ");
+      setError(storageError.message || "Couldn't update your queue.");
       return null;
     }
   };
@@ -37,8 +37,8 @@ function Queue() {
     setPeekedMeal(nextMeal);
     setMessage(
       nextMeal
-        ? `เมนูถัดไปคือ ${nextMeal.strMeal}`
-        : "Queue ว่าง ไม่มีเมนูให้ Peek",
+        ? `Next up: ${nextMeal.strMeal}`
+        : "Your queue is empty. Add a meal to get started!",
     );
   };
 
@@ -47,14 +47,14 @@ function Queue() {
     setPeekedMeal(null);
     setMessage(
       removedMeal
-        ? `นำ ${removedMeal.strMeal} ออกจากหัวคิวแล้ว`
-        : "Queue ว่าง ไม่มีเมนูให้ Dequeue",
+        ? `Removed ${removedMeal.strMeal} from the top of your queue.`
+        : "Your queue is empty. Nothing to remove.",
     );
   };
 
   const removeFromQueue = (id) => {
     const removed = updateQueue((mealQueue) => mealQueue.remove(id));
-    if (removed) setMessage("นำเมนูออกจาก Queue แล้ว");
+    if (removed) setMessage("Removed from your queue.");
   };
 
   const clearQueue = () => {
@@ -62,35 +62,35 @@ function Queue() {
       writeStoredMeals(QUEUE_STORAGE_KEY, []);
       setQueue([]);
       setPeekedMeal(null);
-      setMessage("ล้าง Queue แล้ว");
+      setMessage("Your queue is cleared.");
       setError("");
     } catch (storageError) {
-      setError(storageError.message || "ล้าง Queue ไม่สำเร็จ");
+      setError(storageError.message || "Couldn't clear your queue.");
     }
   };
 
   return (
     <div className="queue-page">
       <h1>📋 My Food Queue</h1>
-      <p>รายการเมนูอาหารตามลำดับที่เพิ่ม (FIFO)</p>
+      <p>Your meals, in the order you added them (FIFO).</p>
 
       <div className="queue-actions">
         <button type="button" onClick={peekNextMeal}>
-          Peek เมนูถัดไป
+          Next up
         </button>
         <button
           type="button"
           onClick={dequeueNextMeal}
           disabled={queue.length === 0}
         >
-          Dequeue เมนูแรก
+          Remove first
         </button>
         <button
           type="button"
           onClick={clearQueue}
           disabled={queue.length === 0}
         >
-          ล้าง Queue ทั้งหมด
+          Clear queue
         </button>
       </div>
 
@@ -100,13 +100,13 @@ function Queue() {
       )}
       {peekedMeal && (
         <p className="peeked-meal">
-          หัวคิว:{" "}
+          Up next:{" "}
           <Link to={`/meal/${peekedMeal.idMeal}`}>{peekedMeal.strMeal}</Link>
         </p>
       )}
 
       {queue.length === 0 ? (
-        <p>ยังไม่มีเมนูใน Queue</p>
+        <p>Your queue is empty. Add a meal you love!</p>
       ) : (
         <div className="meal-grid">
           {queue.map((meal, index) => (
@@ -114,7 +114,7 @@ function Queue() {
               key={meal.idMeal}
               meal={meal}
               order={index + 1}
-              actionLabel="นำออกจาก Queue"
+              actionLabel="Remove from queue"
               onAction={(item) => removeFromQueue(item.idMeal)}
             />
           ))}

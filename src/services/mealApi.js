@@ -5,7 +5,7 @@ async function requestApiData(path, options) {
   } catch (error) {
     if (error.name === "AbortError") throw error;
     throw new Error(
-      "เชื่อมต่อ FoodFinder API ไม่ได้ กรุณาตรวจสอบ API URL และสถานะการ Deploy (ในเครื่องให้รัน npm run server)",
+      "Couldn't connect to FoodFinder. Check the API URL and deployment status (run npm run server locally).",
     );
   }
 
@@ -15,18 +15,18 @@ async function requestApiData(path, options) {
   } catch {
     if (response.status === 502) {
       throw new Error(
-        "FoodFinder API ยังไม่พร้อมใช้งาน กรุณาตรวจสอบสถานะ Express API หรือ Vercel Function",
+        "FoodFinder is temporarily unavailable. Check the Express API or Vercel Function.",
       );
     }
-    throw new Error("FoodFinder API ส่งข้อมูลที่อ่านไม่ได้กลับมา");
+    throw new Error("FoodFinder returned data we couldn't read.");
   }
 
   if (!response.ok || !result?.success) {
-    throw new Error(result?.message || "ไม่สามารถโหลดข้อมูลเมนูได้");
+    throw new Error(result?.message || "Couldn't load meals.");
   }
 
   if (!("data" in result)) {
-    throw new Error("FoodFinder API ตอบกลับโดยไม่มีข้อมูลเมนู");
+    throw new Error("FoodFinder returned no meal data.");
   }
 
   return result.data;
@@ -38,7 +38,7 @@ export async function searchMealsByKeyword(keyword, signal) {
     { signal },
   );
   if (!Array.isArray(meals)) {
-    throw new Error("FoodFinder API ส่งผลการค้นหาในรูปแบบที่ไม่ถูกต้อง");
+    throw new Error("FoodFinder returned search results in an unexpected format.");
   }
   return meals;
 }
@@ -46,7 +46,7 @@ export async function searchMealsByKeyword(keyword, signal) {
 export async function getRandomMeal(signal) {
   const meal = await requestApiData("/api/random", { signal });
   if (!meal || typeof meal !== "object" || !meal.idMeal) {
-    throw new Error("FoodFinder API ส่งข้อมูลเมนูสุ่มในรูปแบบที่ไม่ถูกต้อง");
+    throw new Error("FoodFinder returned an unexpected random meal.");
   }
   return meal;
 }
@@ -64,7 +64,7 @@ export function filterMealsByIngredient(ingredient) {
 export async function getIngredients(signal) {
   const ingredients = await requestApiData("/api/ingredient-list", { signal });
   if (!Array.isArray(ingredients) || ingredients.some((item) => typeof item !== "string")) {
-    throw new Error("FoodFinder API ส่งรายการวัตถุดิบในรูปแบบที่ไม่ถูกต้อง");
+    throw new Error("FoodFinder returned an unexpected ingredient list.");
   }
   return ingredients;
 }
@@ -77,7 +77,7 @@ export async function searchMealsByIngredients(included, excluded, signal) {
     signal,
   });
   if (!Array.isArray(meals)) {
-    throw new Error("FoodFinder API ส่งผลการค้นหาในรูปแบบที่ไม่ถูกต้อง");
+    throw new Error("FoodFinder returned search results in an unexpected format.");
   }
   return meals;
 }

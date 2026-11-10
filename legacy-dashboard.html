@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -189,7 +189,7 @@
   <header>
     <h1>Meal Dashboard</h1>
     <p>
-      801201 Week 8 · Sort (W5) + Queue (W6) + Stack (W8) · Search + API · ข้อมูลจาก TheMealDB API
+      801201 Week 8 · Sort (W5) + Queue (W6) + Stack (W8) · Search + API · Powered by TheMealDB
     </p>
   </header>
 
@@ -197,28 +197,28 @@
 
   <div class="layout">
     <div class="panel">
-      <h2>เมนูอาหาร — Search + Filter + Sort</h2>
+      <h2>Meals — Search + Filter + Sort</h2>
 
       <div class="toolbar">
         <input
           type="text"
           id="searchInput"
-          placeholder="ค้นหาเมนูอาหาร เช่น chicken"
+          placeholder="Search meals, e.g. chicken"
           onkeydown="if(event.key === 'Enter') searchMeals()"
         >
 
-        <button class="primary" onclick="searchMeals()">🔎 ค้นหา</button>
+        <button class="primary" onclick="searchMeals()">🔎 Search</button>
 
-        <button onclick="clearSearch()">ล้าง</button>
+        <button onclick="clearSearch()">Clear</button>
       </div>
 
       <div class="toolbar">
         <select id="categoryFilter">
-          <option value="">ทุก Category</option>
+          <option value="">All categories</option>
         </select>
 
         <select id="areaFilter">
-          <option value="">ทุก Area</option>
+          <option value="">All areas</option>
         </select>
 
         <button onclick="loadSearchResults()">Filter</button>
@@ -239,19 +239,19 @@
     <div>
       <div class="panel" style="margin-bottom:16px">
         <h2>
-          คิวเมนูที่เลือก
+          My meal queue
           <span class="badge" id="queueSize">0</span>
         </h2>
 
         <div class="toolbar">
-          <button class="primary" onclick="peekNextMeal()">ดูเมนูถัดไป (Peek)</button>
+          <button class="primary" onclick="peekNextMeal()">Next up (Peek)</button>
         </div>
 
         <ul id="watchlist"></ul>
       </div>
 
       <div class="panel">
-        <h2>ประวัติ (Stack)</h2>
+        <h2>History (Stack)</h2>
 
         <div class="toolbar">
           <button class="warn" onclick="undo()">↩ Undo (pop)</button>
@@ -264,7 +264,7 @@
 
   <div id="mealDetailModal" class="detail-modal" style="display:none" role="dialog" aria-modal="true">
     <div class="detail-box">
-      <button class="detail-close" onclick="closeMealDetail()" aria-label="ปิด">✕</button>
+      <button class="detail-close" onclick="closeMealDetail()" aria-label="Close">✕</button>
       <div id="mealDetailContent"></div>
     </div>
   </div>

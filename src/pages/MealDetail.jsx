@@ -31,7 +31,7 @@ function MealDetail() {
         setMeal(result);
       } catch (requestError) {
         if (requestError.name !== "AbortError") {
-          setError(requestError.message || "เกิดข้อผิดพลาด");
+          setError(requestError.message || "Something went wrong.");
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -70,15 +70,15 @@ function MealDetail() {
     try {
       if (!addMealToQueue(meal)) {
         setStorageError(true);
-        setStorageMessage("เมนูนี้อยู่ใน Queue แล้ว");
+        setStorageMessage("This meal is already in your queue.");
         return;
       }
 
       setStorageError(false);
-      setStorageMessage("เพิ่มเมนูเข้า Queue แล้ว");
+      setStorageMessage("Added to your queue.");
     } catch (storageException) {
       setStorageError(true);
-      setStorageMessage(storageException.message || "เพิ่มเมนูเข้า Queue ไม่สำเร็จ");
+      setStorageMessage(storageException.message || "Couldn't add this meal to your queue.");
     }
   };
 
@@ -86,23 +86,23 @@ function MealDetail() {
     try {
       if (!saveRecipeToStorage(meal)) {
         setStorageError(true);
-        setStorageMessage("เมนูนี้ถูกบันทึกไว้แล้ว");
+        setStorageMessage("This meal is already saved.");
         return;
       }
 
       setStorageError(false);
-      setStorageMessage("บันทึกเมนูโปรดเรียบร้อย");
+      setStorageMessage("Saved to your recipes.");
     } catch (storageException) {
       setStorageError(true);
-      setStorageMessage(storageException.message || "บันทึกเมนูโปรดไม่สำเร็จ");
+      setStorageMessage(storageException.message || "Couldn't save this recipe.");
     }
   };
 
   if (loading) {
     return (
       <div className="meal-detail">
-        <button className="back-button" onClick={goBack}>← ย้อนกลับ</button>
-        <Loading message="กำลังโหลดรายละเอียดอาหาร..." />
+        <button className="back-button" onClick={goBack}>← Back</button>
+        <Loading message="Loading your recipe..." />
       </div>
     );
   }
@@ -110,7 +110,7 @@ function MealDetail() {
   if (error) {
     return (
       <div className="meal-detail">
-        <button className="back-button" onClick={goBack}>← ย้อนกลับ</button>
+        <button className="back-button" onClick={goBack}>← Back</button>
         <h2>{error}</h2>
       </div>
     );
@@ -120,7 +120,7 @@ function MealDetail() {
 
   return (
     <div className="meal-detail">
-      <button className="back-button" onClick={goBack}>← ย้อนกลับ</button>
+      <button className="back-button" onClick={goBack}>← Back</button>
 
       <h1>{meal.strMeal}</h1>
 
@@ -140,11 +140,11 @@ function MealDetail() {
 
       <div className="detail-buttons">
         <button onClick={addToQueue}>
-          ➕ เพิ่มเข้า Queue
+          ➕ Add to queue
         </button>
 
         <button onClick={saveRecipe}>
-          ❤️ บันทึกเมนูโปรด
+          ❤️ Save recipe
         </button>
       </div>
       {storageMessage && (

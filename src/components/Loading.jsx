@@ -1,4 +1,4 @@
-function Loading({ message = "กำลังโหลด..." }) {
+function Loading({ message = "Cooking up something good..." }) {
   return (
     <p className="status-message" role="status" aria-live="polite">
       {message}

@@ -31,13 +31,13 @@ function IngredientPicker({
       <input
         id={`${id}-search`}
         type="search"
-        placeholder="ค้นหาวัตถุดิบ..."
+        placeholder="Search ingredients..."
         value={searchValue}
         disabled={disabled}
         onChange={(event) => onSearchChange(event.target.value)}
       />
       <p className="ingredient-hint">
-        เลือกได้หลายรายการ รายการที่เลือกในอีกส่วนจะไม่สามารถเลือกซ้ำได้
+        Pick as many as you like. Ingredients chosen in the other list can't be selected again.
       </p>
 
       <div className="ingredient-options" role="group" aria-labelledby={`${id}-label`}>
@@ -53,12 +53,12 @@ function IngredientPicker({
           </label>
         ))}
         {filteredIngredients.length === 0 && (
-          <p className="ingredient-hint">ไม่พบวัตถุดิบที่ค้นหา</p>
+          <p className="ingredient-hint">No ingredients found.</p>
         )}
       </div>
 
       <div className="selected-ingredients" aria-live="polite">
-        <p>เลือกแล้ว {selectedIngredients.length} รายการ</p>
+        <p>{selectedIngredients.length} selected</p>
         {selectedIngredients.length > 0 && (
           <ul className="ingredient-chips">
             {selectedIngredients.map((ingredient) => (
@@ -66,7 +66,7 @@ function IngredientPicker({
                 <span>{ingredient}</span>
                 <button
                   type="button"
-                  aria-label={`ลบ ${ingredient} จาก${label}`}
+                  aria-label={`Remove ${ingredient} from ${label}`}
                   disabled={disabled}
                   onClick={() => onRemove(ingredient)}
                 >
@@ -101,7 +101,7 @@ function IngredientFinder() {
       .catch((requestError) => {
         if (!controller.signal.aborted) {
           setIngredientListError(
-            requestError.message || "ไม่สามารถโหลดรายการวัตถุดิบได้",
+            requestError.message || "Couldn't load the ingredient list.",
           );
         }
       })
@@ -120,7 +120,7 @@ function IngredientFinder() {
     if (includedIngredients.length === 0 && excludedIngredients.length === 0) {
       setMeals([]);
       setSearched(false);
-      setError("กรุณาเลือกวัตถุดิบอย่างน้อย 1 รายการ");
+      setError("Choose at least one ingredient.");
       return;
     }
 
@@ -136,7 +136,7 @@ function IngredientFinder() {
       );
       setMeals(results);
     } catch (requestError) {
-      setError(requestError.message || "เกิดข้อผิดพลาดในการค้นหา");
+      setError(requestError.message || "Something went wrong while searching.");
     } finally {
       setLoading(false);
     }
@@ -176,10 +176,10 @@ function IngredientFinder() {
   return (
     <div className="ingredient-page">
       <h1>🥕 Ingredient Finder</h1>
-      <p>เลือกวัตถุดิบที่มีและวัตถุดิบที่ไม่ต้องการ เพื่อค้นหาเมนูที่ตรงเงื่อนไข</p>
+      <p>Choose ingredients to include or skip, and find a meal that fits.</p>
 
       {ingredientListLoading && (
-        <Loading message="กำลังโหลดรายการวัตถุดิบจาก TheMealDB..." />
+        <Loading message="Loading ingredients from TheMealDB..." />
       )}
       {ingredientListError && (
         <p className="status-message error-message" role="alert">
@@ -192,17 +192,17 @@ function IngredientFinder() {
           className="ingredient-search"
           loading={loading}
           onSubmit={searchByIngredients}
-          submitLabel="ค้นหาเมนู"
+          submitLabel="Find meals"
           extraActions={
             <button type="button" onClick={clearSearch} disabled={loading}>
-              ล้างทั้งหมด
+              Clear all
             </button>
           }
         >
           <div className="ingredient-pickers">
             <IngredientPicker
               id="available-ingredients"
-              label="วัตถุดิบที่มี"
+              label="Include ingredients"
               ingredients={availableIngredients}
               selectedIngredients={includedIngredients}
               unavailableIngredients={excludedIngredients}
@@ -224,7 +224,7 @@ function IngredientFinder() {
             />
             <IngredientPicker
               id="excluded-ingredients"
-              label="วัตถุดิบที่ไม่ต้องการ"
+              label="Exclude ingredients"
               ingredients={availableIngredients}
               selectedIngredients={excludedIngredients}
               unavailableIngredients={includedIngredients}
@@ -253,13 +253,13 @@ function IngredientFinder() {
           {error}
         </p>
       )}
-      {!error && loading && <Loading message="กำลังค้นหาเมนู..." />}
+      {!error && loading && <Loading message="Finding meals..." />}
       {!error && !loading && searched && meals.length === 0 && (
-        <p className="status-message">ไม่พบเมนูที่ตรงกับวัตถุดิบที่เลือก</p>
+        <p className="status-message">No meals match those ingredients.</p>
       )}
       {!error && !loading && !searched && !ingredientListLoading && !ingredientListError && (
         <p className="status-message">
-          เลือกวัตถุดิบอย่างน้อย 1 รายการจากส่วนใดส่วนหนึ่ง แล้วกดค้นหาเมนู
+          Choose at least one ingredient, then search for meals.
         </p>
       )}
 

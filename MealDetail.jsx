@@ -17,10 +17,10 @@ function MealDetail() {
         if (data) {
           setMeal(data);
         } else {
-          setError("ไม่พบข้อมูลเมนูอาหาร");
+          setError("Meal not found.");
         }
       } catch (err) {
-        setError(err.message || "เกิดข้อผิดพลาด");
+        setError(err.message || "Something went wrong.");
       } finally {
         setLoading(false);
       }
@@ -44,39 +44,39 @@ function MealDetail() {
   const addToQueue = () => {
     const queue = JSON.parse(localStorage.getItem("foodfinder_queue") || "[]");
     if (queue.some(item => item.idMeal === meal.idMeal)) {
-      alert("เมนูนี้อยู่ใน Queue แล้ว");
+      alert("This meal is already in your queue.");
       return;
     }
     queue.push(meal);
     localStorage.setItem("foodfinder_queue", JSON.stringify(queue));
-    alert("เพิ่มเมนูเข้า Queue แล้ว!");
+    alert("Added to your queue!");
   };
 
   const saveRecipe = () => {
     const saved = JSON.parse(localStorage.getItem("foodfinder_saved") || "[]");
     if (saved.some(item => item.idMeal === meal.idMeal)) {
-      alert("เมนูนี้ถูกบันทึกไว้แล้ว");
+      alert("This meal is already saved.");
       return;
     }
     saved.push(meal);
     localStorage.setItem("foodfinder_saved", JSON.stringify(saved));
-    alert("บันทึกเมนูโปรดเรียบร้อย!");
+    alert("Saved to your recipes!");
   };
 
-  if (loading) return <h2>กำลังโหลดรายละเอียดอาหาร...</h2>;
-  if (error) return <div><h2>{error}</h2><Link to="/">กลับหน้าหลัก</Link></div>;
+  if (loading) return <h2>Loading your recipe...</h2>;
+  if (error) return <div><h2>{error}</h2><Link to="/">Back to home</Link></div>;
   if (!meal) return null;
 
   return (
     <div className="meal-detail">
-      <Link to="/">← กลับหน้าหลัก</Link>
+      <Link to="/">← Back to home</Link>
       <h1>{meal.strMeal}</h1>
       <img src={meal.strMealThumb} alt={meal.strMeal} width="350" style={{ borderRadius: "8px" }} />
       <p><strong>Category:</strong> {meal.strCategory}</p>
       <p><strong>Area:</strong> {meal.strArea}</p>
       <div className="detail-buttons" style={{ margin: "15px 0" }}>
-        <button onClick={addToQueue} style={{ marginRight: "10px", padding: "8px 12px" }}>➕ เพิ่มเข้า Queue</button>
-        <button onClick={saveRecipe} style={{ padding: "8px 12px" }}>❤️ บันทึกเมนูโปรด</button>
+        <button onClick={addToQueue} style={{ marginRight: "10px", padding: "8px 12px" }}>➕ Add to queue</button>
+        <button onClick={saveRecipe} style={{ padding: "8px 12px" }}>❤️ Save recipe</button>
       </div>
       <h2>🥕 Ingredients</h2>
       <ul>

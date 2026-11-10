@@ -14,7 +14,7 @@ export function readStoredMeals(storageKey) {
 
   const meals = JSON.parse(stored);
   if (!Array.isArray(meals)) {
-    throw new Error(`ข้อมูลใน Local Storage (${storageKey}) ไม่ถูกต้อง`);
+    throw new Error(`Saved browser data (${storageKey}) is invalid.`);
   }
   return meals;
 }

@@ -67,7 +67,7 @@ function Home() {
           requestError.name !== "AbortError" &&
           requestId === searchRequestId.current
         ) {
-          setError(requestError.message || "โหลดเมนูแนะนำไม่สำเร็จ");
+          setError(requestError.message || "Couldn't load meal ideas.");
         }
       } finally {
         if (requestId === searchRequestId.current) {
@@ -92,7 +92,7 @@ function Home() {
       .catch((requestError) => {
         if (active) {
           setFilterOptionsError(
-            requestError.message || "โหลดตัวกรอง Category/Area ไม่สำเร็จ",
+            requestError.message || "Couldn't load category and area filters.",
           );
         }
       });
@@ -110,7 +110,7 @@ function Home() {
       setMeals([]);
       setSearched(false);
       setShowingRecommendations(false);
-      setError("กรุณาพิมพ์ชื่อเมนูอาหาร");
+      setError("Type a meal name to get started.");
       return;
     }
 
@@ -127,7 +127,7 @@ function Home() {
       includeMealFilterOptions(results);
     } catch (err) {
       if (requestId === searchRequestId.current) {
-        setError(err.message || "เกิดข้อผิดพลาดในการค้นหา");
+        setError(err.message || "Something went wrong while searching.");
       }
     } finally {
       if (requestId === searchRequestId.current) {
@@ -153,7 +153,7 @@ function Home() {
       includeMealFilterOptions([meal]);
     } catch (requestError) {
       if (requestId === searchRequestId.current) {
-        setError(requestError.message || "สุ่มเมนูอาหารไม่สำเร็จ");
+        setError(requestError.message || "Couldn't find a surprise meal.");
       }
     } finally {
       if (requestId === searchRequestId.current) {
@@ -181,15 +181,15 @@ function Home() {
       setActionMessage(
         added
           ? action === "queue"
-            ? `เพิ่ม ${meal.strMeal} เข้า Queue แล้ว`
-            : `บันทึก ${meal.strMeal} แล้ว`
+            ? `Added ${meal.strMeal} to your queue.`
+            : `Saved ${meal.strMeal} to your recipes.`
           : action === "queue"
-            ? "เมนูนี้อยู่ใน Queue แล้ว"
-            : "เมนูนี้ถูกบันทึกไว้แล้ว",
+            ? "This meal is already in your queue."
+            : "This meal is already saved.",
       );
     } catch (storageError) {
       setActionError(true);
-      setActionMessage(storageError.message || "บันทึกเมนูไม่สำเร็จ");
+      setActionMessage(storageError.message || "Couldn't save this meal.");
     }
   };
 
@@ -198,8 +198,8 @@ function Home() {
       <h1>🍽️ Welcome to FoodFinder</h1>
       <p>
         {showingRecommendations
-          ? "เมนูแนะนำจาก TheMealDB"
-          : "ค้นหาเมนูอาหารที่คุณชื่นชอบ"}
+          ? "Fresh ideas from TheMealDB"
+          : "Find your next favorite meal"}
       </p>
 
       <SearchBar
@@ -209,14 +209,14 @@ function Home() {
         submitLabel="Search"
         extraActions={
           <button type="button" onClick={loadRandomMeal} disabled={loading}>
-            สุ่มเมนู
+            Surprise me
           </button>
         }
       >
         <input
           type="text"
-          placeholder="ค้นหาชื่ออาหาร..."
-          aria-label="ค้นหาชื่ออาหาร"
+          placeholder="What are you craving?"
+          aria-label="Search meals"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
         />
@@ -230,7 +230,7 @@ function Home() {
             value={category}
             onChange={(event) => setCategory(event.target.value)}
           >
-            <option value="">ทุก Category</option>
+            <option value="">All categories</option>
             {categories.map((option) => (
               <option key={option} value={option}>{option}</option>
             ))}
@@ -244,7 +244,7 @@ function Home() {
             value={area}
             onChange={(event) => setArea(event.target.value)}
           >
-            <option value="">ทุก Area</option>
+            <option value="">All areas</option>
             {areas.map((option) => (
               <option key={option} value={option}>{option}</option>
             ))}
@@ -280,17 +280,17 @@ function Home() {
         <Loading
           message={
             showingRecommendations
-              ? "กำลังโหลดเมนูแนะนำจาก TheMealDB..."
-              : "กำลังค้นหาเมนู..."
+              ? "Cooking up fresh ideas..."
+              : "Finding tasty meals..."
           }
         />
       )}
       {!error && !loading && searched && visibleMeals.length === 0 && (
-        <p className="status-message">ไม่พบเมนูอาหารที่ค้นหา</p>
+        <p className="status-message">No meals found. Try another search!</p>
       )}
       {!error && !loading && searched && visibleMeals.length > 0 && (
         <p className="status-message" role="status">
-          พบ {visibleMeals.length} เมนู
+          Found {visibleMeals.length} meals
         </p>
       )}
 
@@ -301,11 +301,11 @@ function Home() {
             meal={meal}
             actions={[
               {
-                label: "เพิ่มเข้า Queue",
+                label: "Add to queue",
                 onAction: (item) => handleMealAction("queue", item),
               },
               {
-                label: "บันทึกเมนู",
+                label: "Save recipe",
                 onAction: (item) => handleMealAction("saved", item),
               },
             ]}

@@ -9,7 +9,7 @@ export default function handler(req, res) {
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({
       success: false,
-      message: 'API route ไม่ถูกต้อง',
+      message: 'Invalid API route.',
     }));
     return;
   }

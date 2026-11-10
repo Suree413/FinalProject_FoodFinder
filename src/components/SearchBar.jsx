@@ -4,14 +4,14 @@ function SearchBar({
   extraActions,
   loading = false,
   onSubmit,
-  submitLabel = "ค้นหา",
+  submitLabel = "Search",
 }) {
   return (
     <form className={className} onSubmit={onSubmit}>
       {children}
       <div className="search-actions">
         <button type="submit" disabled={loading}>
-          {loading ? "กำลังค้นหา..." : submitLabel}
+          {loading ? "Searching..." : submitLabel}
         </button>
         {extraActions}
       </div>
