@@ -5,31 +5,35 @@
   "rewrites": [
     {
       "source": "/meals",
-      "destination": "/api/legacy/meals"
+      "destination": "/api/index?__route=/meals"
     },
     {
       "source": "/watchlist/process",
-      "destination": "/api/legacy/watchlist/process"
+      "destination": "/api/index?__route=/watchlist/process"
     },
     {
       "source": "/watchlist/:id",
-      "destination": "/api/legacy/watchlist/:id"
+      "destination": "/api/index?__route=/watchlist/:id"
     },
     {
       "source": "/watchlist",
-      "destination": "/api/legacy/watchlist"
+      "destination": "/api/index?__route=/watchlist"
     },
     {
       "source": "/history",
-      "destination": "/api/legacy/history"
+      "destination": "/api/index?__route=/history"
     },
     {
       "source": "/undo/:position",
-      "destination": "/api/legacy/undo/:position"
+      "destination": "/api/index?__route=/undo/:position"
     },
     {
       "source": "/undo",
-      "destination": "/api/legacy/undo"
+      "destination": "/api/index?__route=/undo"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index?__route=/api/:path*"
     },
     {
       "source": "/(.*)",

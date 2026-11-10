@@ -28,9 +28,10 @@ prints.
 ## Deploy to Vercel
 
 Import the repository into Vercel and use the project root as the Root
-Directory. `vercel.json` builds the Vite frontend into `dist` and rewrites
-client-side routes to `index.html`; `api/[...path].js` exposes the existing
-Express routes as a Vercel Function. It also maps the existing root-level
+Directory. `vercel.json` builds the Vite frontend into `dist`, rewrites
+client-side routes to `index.html`, and maps API requests to the
+`api/index.js` Vercel Function, which forwards them to the existing Express
+routes. It also maps the existing root-level
 `/meals`, `/watchlist`, `/history`, and `/undo` endpoints to that function.
 The frontend keeps using relative URLs, so production requests go to the same
 Vercel domain instead of `localhost`.

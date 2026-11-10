@@ -13,10 +13,6 @@ const cache = new Map();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 app.use(express.json());
-app.use((req, _res, next) => {
-  req.url = req.url.replace(/^\/api\/legacy(?=\/|$)/, '') || '/';
-  next();
-});
 app.use(express.static(path.join(__dirname, 'public')));
 
 function normalizeMeal(meal) {
