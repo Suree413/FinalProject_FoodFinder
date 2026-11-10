@@ -540,6 +540,17 @@ async function undo() {
 // START
 // =====================================================================
 
+Object.assign(window, {
+  searchMeals,
+  clearSearch,
+  addToQueue,
+  peekNextMeal,
+  processQueue,
+  removeQueueItem,
+  undoSelected,
+  undo,
+});
+
 async function startDashboard() {
   await Promise.all([
     loadCategories(),
