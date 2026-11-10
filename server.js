@@ -175,39 +175,52 @@ function bubbleSort(items) {
 }
 
 let meals = [];
+let mealsLoadPromise;
 
 async function loadMeals() {
-  try {
-    const result = await fetchMealDB('filter.php', { a: 'Thai' });
-    meals = (result.meals || []).slice(0, 50).map((meal) =>
-      normalizeMeal({
-        ...meal,
-        strCategory: 'Thai Food',
-        strArea: 'Thai',
-      }),
-    );
-    console.log(`Loaded ${meals.length} Thai meals for legacy endpoints.`);
-  } catch (error) {
-    console.error('Unable to preload Thai meals:', error);
+  if (!mealsLoadPromise) {
+    mealsLoadPromise = fetchMealDB('filter.php', { a: 'Thai' })
+      .then((result) => {
+        meals = (result.meals || []).slice(0, 50).map((meal) =>
+          normalizeMeal({
+            ...meal,
+            strCategory: 'Thai Food',
+            strArea: 'Thai',
+          }),
+        );
+        console.log(`Loaded ${meals.length} Thai meals for legacy endpoints.`);
+        return meals;
+      })
+      .catch((error) => {
+        mealsLoadPromise = undefined;
+        throw error;
+      });
   }
+
+  return mealsLoadPromise;
 }
 
-app.get('/meals', (req, res) => {
-  const algorithm = req.query.sort || 'selection';
-  const startedAt = performance.now();
-  const sorter =
-    algorithm === 'insertion'
-      ? insertionSort
-      : algorithm === 'bubble'
-        ? bubbleSort
-        : selectionSort;
-  const sortedMeals = sorter(meals);
-  res.json({
-    algorithm,
-    count: sortedMeals.length,
-    ms: (performance.now() - startedAt).toFixed(3),
-    data: sortedMeals,
-  });
+app.get('/meals', async (req, res) => {
+  try {
+    const mealData = await loadMeals();
+    const algorithm = req.query.sort || 'selection';
+    const startedAt = performance.now();
+    const sorter =
+      algorithm === 'insertion'
+        ? insertionSort
+        : algorithm === 'bubble'
+          ? bubbleSort
+          : selectionSort;
+    const sortedMeals = sorter(mealData);
+    return res.json({
+      algorithm,
+      count: sortedMeals.length,
+      ms: (performance.now() - startedAt).toFixed(3),
+      data: sortedMeals,
+    });
+  } catch (error) {
+    return sendApiError(res, error, 'Legacy meals API failed');
+  }
 });
 
 app.get('/api/search', async (req, res) => {
@@ -579,6 +592,8 @@ export default app;
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   app.listen(PORT, () => {
     console.log(`FoodFinder API listening at http://localhost:${PORT}`);
-    loadMeals();
+    loadMeals().catch((error) => {
+      console.error('Unable to preload Thai meals:', error);
+    });
   });
 }
